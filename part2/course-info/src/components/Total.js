@@ -7,3 +7,5 @@ const Total = ({ course }) => {
 };
 
 export default Total;
+
+

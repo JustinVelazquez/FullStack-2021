@@ -1,5 +1,6 @@
 import React from 'react';
 import Course from './components/Course';
+import axios from 'axios';
 
 const App = () => {
   const course = [
