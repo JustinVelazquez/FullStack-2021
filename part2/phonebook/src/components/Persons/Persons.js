@@ -1,25 +1,24 @@
 import React from 'react'
 import Person from './Person/Person'
 
-const Persons = ({persons, filtered, }) => {
+const Persons = ({persons, filtered, handleDeletePerson, props }) => {
 
-
+    
+  
     let filteredResult = persons.filter((person) =>
-    person.name.toLowerCase().includes(filtered.toLowerCase())
+    person.name.toUpperCase().includes(filtered.toUpperCase())
 
   );
     return (
-        
-        <ul>
-        {!filteredResult
-          ? persons.map((person) => (
-             <Person id={person.id} name={person.name} number={person.number} />
-            ))
-          : filteredResult.map((person) => (
-            <Person id={person.id} name={person.name} number={person.number} />
-            ))}
+       <ul>
+        {filteredResult.map(person => (
+          <Person id={person.id} name={person.name} number={person.number} deletePerson={handleDeletePerson(person.name, person.id)} />
+        ))}
         </ul>
     )
+  //   return(
+  //     <div>hello</div>
+  //   )
 }
 
 export default Persons

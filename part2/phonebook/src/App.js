@@ -2,19 +2,16 @@ import React, { useState, useEffect } from 'react';
 import AddPerson from './components/AddPerson';
 import Persons from './components/Persons/Persons';
 import Filter from './components/Filter';
-import axios from 'axios';
+import Notification from './components/Notifcation';
+
+import personsService from './services/persons';
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    // { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    // { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    // { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    // { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 },
-    // { name: 'Dan Abramov', number: '12-43-234345', id: 5 },
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [number, setNumber] = useState('');
   const [filtered, setFiltered] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleNameChange = (e) => {
     setNewName(e.target.value);
@@ -37,37 +34,89 @@ const App = () => {
       number: number,
       id: persons.length + 1,
     };
-    persons.find((n) => n.name === newName)
-      ? alert(`${newName} already exists. Please try another`)
-      : setPersons(persons.concat(nameObject));
-    setNewName('');
-    setNumber('');
+    let foundPerson = persons.find((n) => n.name === newName);
+   
+
+    if (foundPerson) {
+      console.log(foundPerson);
+      if (
+        window.confirm(
+          `${newName} is already in the phonebook. Replace the old number with a new one?`
+        )
+      ) {
+        personsService
+          .updatePerson(foundPerson.id, { ...foundPerson, number })
+          .then((updatedPerson) => {
+            console.log(`updated person props`,updatedPerson)
+            setPersons(
+              persons.map((person) => (person.name ? updatedPerson : person))
+            );
+            console.group(persons)
+          })
+          .catch((err) => {
+            console.log(err);
+            setErrorMessage('This is an error');
+          });
+        setPersons(persons.concat(nameObject));
+        console.log(nameObject, persons)
+        setErrorMessage(`Changed ${nameObject} number`);
+        setNewName('');
+        setNumber('');
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 3000);
+      }
+    } else {
+      personsService
+        .create(nameObject)
+        .then((newPerson) => {
+          setPersons(persons.concat(nameObject));
+          setErrorMessage(`Added ${nameObject.name}`);
+          setNewName('');
+          setNumber('');
+        })
+        .catch((error) => {
+          setErrorMessage(`${error.response.data.error}`);
+          console.log(error);
+        });
+      setTimeout(() => {
+        setErrorMessage(null);
+      }, 3000);
+    }
   };
 
-  // useEffect(() => {
-  //   axios.get('http://localhost:3001/persons').then((res) => {
-  //     const names = res.data;
-  //     console.log(names);
-  //   }, []);
-  //   console.log('first')
-  // });
+  const handleDeletePerson = (name, id) => {
+    return () => {
+      if (window.confirm(`Delete ${name}?`)) {
+        personsService
+          .deletePerson(id)
+          .then(() => {
+            setPersons(persons.filter((n) => n.id !== id));
+            setErrorMessage(`Deleted ${name}`);
+            setNewName('');
+            setNumber('');
+          })
+          .catch((err) => {
+            setPersons(persons.filter((n) => n.name !== name));
+            setErrorMessage(`User ${name} has already been deleted`);
+          });
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 3000);
+      }
+    };
+  };
 
   useEffect(() => {
-    console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        console.log('promise fulfilled')
-        const names = response.data
-        setPersons(names)
-      })
-  }, [])
-
-
+    personsService.getAll().then((names) => {
+      setPersons(names);
+    });
+  }, []);
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} />
       <Filter filtered={filtered} handleFilter={handleFilter} />
       <h2>Add a new person!</h2>
       <AddPerson
@@ -78,7 +127,11 @@ const App = () => {
         number={number}
       />
       <h2>Numbers</h2>
-      <Persons persons={persons} filtered={filtered} />
+      <Persons
+        persons={persons}
+        filtered={filtered}
+        handleDeletePerson={handleDeletePerson}
+      />
     </div>
   );
 };
