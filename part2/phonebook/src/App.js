@@ -3,6 +3,7 @@ import AddPerson from './components/AddPerson';
 import Persons from './components/Persons/Persons';
 import Filter from './components/Filter';
 import Notification from './components/Notifcation';
+import './app.css'
 
 import personsService from './services/persons';
 
