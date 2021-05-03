@@ -1,0 +1,9 @@
+POST http://localhost:3000/api/addBlog
+Content-Type: application/json
+
+{
+    "title": "why are we here",
+    "author": "the universe",
+    "url": "onlyYouknow.com",
+    "likes": 1 
+}
